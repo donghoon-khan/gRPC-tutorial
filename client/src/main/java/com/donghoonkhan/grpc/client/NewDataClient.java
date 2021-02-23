@@ -26,89 +26,89 @@ public class NewDataClient {
 
 
     public void sendBlockingUnaryMessage(EventRequest eventRequest) {
-        log.info("### request : {}", eventRequest.toString());
+        log.info("### BlockingUnaryRequest : {}", eventRequest.toString());
         EventResponse eventResponse = blockingStub.unaryEvent(eventRequest);
-        log.info("### response : {}", eventResponse.toString());
+        log.info("### BlockingUnaryResponse : {}", eventResponse.toString());
     }
 
     public void sendAsyncUnaryMessage(EventRequest eventRequest) {
-        log.info("### request : {}", eventRequest.toString());
+        log.info("### AsyncUnaryRequest : {}", eventRequest.toString());
         asyncStub.unaryEvent(eventRequest, new StreamObserver<EventResponse>(){
             @Override
             public void onNext(EventResponse value) {
-                log.info("### response : {}", value.toString());
+                log.info("### AsyncUnaryResponse : {}", value.toString());
             }
 
             @Override
             public void onError(Throwable t) {
-                log.info("onError");
+                log.info("AsyncUnaryOnError");
             }
 
             @Override
             public void onCompleted() {
-                log.info("onCompleted");
+                log.info("AsyncUnaryOnCompleted");
             }
         });
-        log.info("nonblocking + async 방식이기에 Request 후 Response 전 로그 찍힘");
+        log.info("AsyncUnaryDone");
     }
 
     public void sendFutureUnaryMessage(EventRequest eventRequest) {
-        log.info("### request : {}", eventRequest.toString());
+        log.info("### FutureUnaryRequest : {}", eventRequest.toString());
         EventResponse eventResponse = null;
         ListenableFuture<EventResponse> future = futureStub.unaryEvent(eventRequest);
-        log.info("Future니까 Nonblocking?");
         try {
             eventResponse = future.get(2, TimeUnit.SECONDS);
+            log.info("### FutureUnaryResponse : {}", eventResponse.toString());
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            Thread.currentThread().interrupt();
             log.error(e.getMessage());
         }
-        log.info("### response : {}", eventResponse.toString());
     }
 
     public void sendBlockingServerStreamingMessage(EventRequest eventRequest) {
-        log.info("### request : {}", eventRequest.toString());
+        log.info("### BlockingServerStreamingRequest : {}", eventRequest.toString());
         Iterator<EventResponse> responseIter = blockingStub.serverStreamingEvent(eventRequest);
         responseIter.forEachRemaining(response ->
-            log.info("### response : {}", response.toString())
+            log.info("### BlockingServerStreamingResponse : {}", response.toString())
         );
     }
 
     public void sendAsyncServerStreamingMessage(EventRequest eventRequest) {
-        log.info("### request : {}", eventRequest.toString());
+        log.info("### AsyncServerStreamingRequest : {}", eventRequest.toString());
         asyncStub.serverStreamingEvent(eventRequest, new StreamObserver<EventResponse>() {
             @Override
             public void onNext(EventResponse value) {
-                log.info("### response : {}", value.toString());
+                log.info("### AsyncServerStreamingResponse : {}", value.toString());
             }
 
             @Override
             public void onError(Throwable t) {
-                log.info("onError");
+                log.info("AsyncServerStreamingOnError");
             }
 
             @Override
             public void onCompleted() {
-                log.info("----------[END] Async Server Streaming response----------");
+                log.info("AsyncServerStreamingOnCompleted");
             }
         });
-        log.info("서버 응답과 상관없이 다른 작업중..");
+        log.info("AsyncServerStreamingDone");
     }
 
     public void sendAsyncClietStreamingMessage(List<EventRequest> eventRequests) {
         StreamObserver<EventResponse> responseObserver = new StreamObserver<EventResponse>() {
             @Override
             public void onNext(EventResponse value) {
-                log.info("### response : {}", value.toString());
+                log.info("### AsyncClientStreamingResponse : {}", value.toString());
             }
 
             @Override
             public void onError(Throwable t) {
-                log.info("onError");
+                log.info("AsyncClientStreamingOnError");
             }
 
             @Override
             public void onCompleted() {
-                log.info("----------[END] Async Client Streaming response----------");
+                log.info("AsyncClientStreamingOnCompleted");
             }
         };
 
@@ -123,24 +123,23 @@ public class NewDataClient {
         StreamObserver<EventResponse> responseObserver = new StreamObserver<EventResponse>() {
             @Override
             public void onNext(EventResponse value) {
-                log.info("### response : {}", value.toString());
+                log.info("### BiDirectionalStreamingResponse : {}", value.toString());
             }
 
             @Override
             public void onError(Throwable t) {
-                log.info("onError");
+                log.info("BiDirectionalStreamingOnError");
             }
 
             @Override
             public void onCompleted() {
-                log.info("----------[END] Bidirection Streaming response----------");
+                log.info("BiDirectionalStreamingOnCompleted");
             }
         };
         StreamObserver<EventRequest> requestObserver = asyncStub.biStreamingEvent(responseObserver);
         for (EventRequest eventRequest : eventRequests) {
             requestObserver.onNext(eventRequest);
         }
-        log.info("async니까 바로 로그 찍힘");
         requestObserver.onCompleted();
     }
 }
